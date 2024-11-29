@@ -30,12 +30,13 @@ import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
-import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.ILazyTreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.pde.core.plugin.IPluginBase;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.core.plugin.PluginRegistry;
 import org.eclipse.pde.internal.core.PDECore;
+import org.eclipse.pde.internal.core.PluginModelManager;
 import org.eclipse.pde.internal.ui.IHelpContextIds;
 import org.eclipse.pde.internal.ui.PDEPlugin;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
@@ -52,10 +53,20 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.PlatformUI;
 
 public class PluginListPage extends BasePluginListPage {
-	class PluginContentProvider implements ITreeContentProvider {
+	class PluginContentProvider implements ILazyTreeContentProvider {
+		private IPluginModelBase[] elements;
+
 		@Override
-		public Object[] getElements(Object parent) {
-			return PluginRegistry.getActiveModels();
+		public void updateElement(Object parent, int index) {
+			pluginViewer.replace(parent, index, getElements()[index]);
+		}
+
+		@Override
+		public void updateChildCount(Object element, int currentChildCount) {
+			int newChildCount = getChildCount(element);
+			if (currentChildCount != newChildCount) {
+				pluginViewer.setChildCount(element, newChildCount);
+			}
 		}
 
 		@Override
@@ -76,18 +87,22 @@ public class PluginListPage extends BasePluginListPage {
 		}
 
 		@Override
-		public Object[] getChildren(Object parentElement) {
-			return new Object[0];
-		}
-
-		@Override
 		public Object getParent(Object element) {
 			return null;
 		}
 
-		@Override
-		public boolean hasChildren(Object element) {
-			return false;
+		private int getChildCount(Object element) {
+			if (element instanceof PluginModelManager) {
+				return getElements().length;
+			}
+			return 0;
+		}
+
+		private IPluginModelBase[] getElements() {
+			if (elements == null) {
+				elements = PluginRegistry.getActiveModels();
+			}
+			return elements;
 		}
 	}
 

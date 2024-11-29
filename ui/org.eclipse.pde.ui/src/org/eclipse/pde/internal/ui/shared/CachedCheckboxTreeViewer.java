@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
+import org.eclipse.jface.viewers.ICheckStateProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.dialogs.ContainerCheckedTreeViewer;
@@ -48,6 +49,18 @@ public class CachedCheckboxTreeViewer extends ContainerCheckedTreeViewer {
 	protected CachedCheckboxTreeViewer(Tree tree) {
 		super(tree);
 		addCheckStateListener(event -> updateCheckState(event.getElement(), event.getChecked()));
+		setCheckStateProvider(new ICheckStateProvider() {
+			@Override
+			public boolean isChecked(Object element) {
+				return checkState.contains(element);
+			}
+
+			@Override
+			public boolean isGrayed(Object element) {
+				// "grayed" state is automatically updated by the container
+				return getGrayed(element);
+			}
+		});
 		setUseHashlookup(true);
 	}
 

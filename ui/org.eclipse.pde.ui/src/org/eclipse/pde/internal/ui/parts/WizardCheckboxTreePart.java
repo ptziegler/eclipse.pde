@@ -14,7 +14,6 @@
 package org.eclipse.pde.internal.ui.parts;
 
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
-import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
@@ -131,7 +130,7 @@ public class WizardCheckboxTreePart extends CheckboxTreePart {
 
 	@Override
 	protected StructuredViewer createStructuredViewer(Composite parent, int style, FormToolkit toolkit) {
-		StructuredViewer viewer = super.createStructuredViewer(parent, style, toolkit);
+		StructuredViewer viewer = super.createStructuredViewer(parent, style | SWT.VIRTUAL, toolkit);
 		viewer.setComparator(ListUtil.NAME_COMPARATOR);
 		return viewer;
 	}
@@ -172,11 +171,9 @@ public class WizardCheckboxTreePart extends CheckboxTreePart {
 			return 0;
 		}
 
-		ITreeContentProvider contentProvider = (ITreeContentProvider) viewer.getContentProvider();
-		if (contentProvider == null) {
-			return 0;
-		}
-		return contentProvider.getElements(viewer.getInput()).length;
+		// Note: Calculating the number of items takes linear time on Linux...
+		// https://github.com/eclipse-platform/eclipse.platform.swt/issues/882
+		return viewer.getTree().getItemCount();
 	}
 
 	protected void handleSelectAll(boolean select) {

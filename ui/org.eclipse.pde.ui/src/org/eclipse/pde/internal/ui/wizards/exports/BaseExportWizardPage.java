@@ -28,8 +28,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.viewers.ILazyTreeContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.pde.core.IModel;
 import org.eclipse.pde.internal.core.FeatureModelManager;
@@ -62,15 +62,20 @@ public abstract class BaseExportWizardPage extends AbstractExportWizardPage {
 	protected JARSigningTab fJARSiginingTab;
 	protected TabFolder fTabFolder;
 
-	private class ExportListProvider implements ITreeContentProvider {
+	private class ExportListProvider implements ILazyTreeContentProvider {
+		private Object[] elements;
+
 		@Override
-		public Object[] getElements(Object parent) {
-			return getListElements();
+		public void updateElement(Object parent, int index) {
+			fExportPart.getTreeViewer().replace(parent, index, getElements()[index]);
 		}
 
 		@Override
-		public Object[] getChildren(Object parentElement) {
-			return new Object[0];
+		public void updateChildCount(Object element, int currentChildCount) {
+			int newChildCount = getChildCount(element);
+			if (currentChildCount != newChildCount) {
+				fExportPart.getTreeViewer().setChildCount(element, newChildCount);
+			}
 		}
 
 		@Override
@@ -78,9 +83,18 @@ public abstract class BaseExportWizardPage extends AbstractExportWizardPage {
 			return null;
 		}
 
-		@Override
-		public boolean hasChildren(Object element) {
-			return false;
+		private int getChildCount(Object element) {
+			if (element == getInput()) {
+				return getElements().length;
+			}
+			return 0;
+		}
+
+		private Object[] getElements() {
+			if (elements == null) {
+				elements = getListElements();
+			}
+			return elements;
 		}
 	}
 
